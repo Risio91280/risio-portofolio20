@@ -1,0 +1,290 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14251b">
+  <title>Administration — Risio Studio</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body { min-height: 100vh; }
+    .admin-wrap { max-width: 1100px; margin: auto; padding: 45px 22px 80px; }
+    .admin-head { display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:35px; }
+    .admin-head h1 { font:600 32px "Space Grotesk"; margin:8px 0; }
+    .admin-tabs { display:flex; gap:8px; flex-wrap:wrap; margin:25px 0; }
+    .tab { background:var(--surface); color:var(--muted); border:1px solid var(--border); padding:11px 16px; border-radius:8px; }
+    .tab.active { background:var(--forest); color:white; border-color:#63866a; }
+    .admin-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:23px; margin-bottom:18px; }
+    .admin-card h2 { font:600 20px "Space Grotesk"; letter-spacing:-.5px; margin:0 0 18px; }
+    .admin-input, .admin-textarea { width:100%; background:#101711; border:1px solid var(--border); border-radius:8px; padding:12px; color:white; margin:7px 0 15px; outline:none; }
+    .admin-textarea { min-height:300px; font:12px/1.6 Consolas,monospace; resize:vertical; }
+    .admin-label { color:var(--muted); font-size:12px; }
+    .login-box { max-width:420px; margin:12vh auto; }
+    .conversation-list { display:grid; gap:9px; }
+    .conversation { display:flex; justify-content:space-between; align-items:center; gap:15px; padding:14px; border:1px solid var(--border); border-radius:9px; background:#111913; }
+    .conversation small { display:block; color:var(--muted); margin-top:4px; }
+    .conversation button, .secondary-button { background:#293b2d; border:1px solid var(--border); color:white; border-radius:7px; padding:9px 12px; }
+    .chat-log { min-height:120px; max-height:360px; overflow:auto; padding:12px; background:#101711; border:1px solid var(--border); border-radius:9px; margin:12px 0; }
+    .admin-message { padding:10px; margin:8px 0; border-radius:8px; background:#26372a; }
+    .admin-message.visitor { background:#202a23; }
+    .admin-message small { color:var(--green-light); }
+    .admin-message p { white-space:pre-wrap; overflow-wrap:anywhere; margin:4px 0; }
+    .danger { background:#542d2d!important; border-color:#814646!important; }
+    .notice { color:var(--green-light); font-size:13px; min-height:20px; margin:10px 0; }
+    .hidden { display:none!important; }
+    .admin-form-row { display:flex; gap:9px; flex-wrap:wrap; }
+    @media(max-width:600px) { .admin-head { align-items:flex-start; flex-direction:column; } .conversation { align-items:flex-start; flex-direction:column; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-mark">R</span><span>RISIO<span class="brand-dot">.</span></span></a>
+    <a class="text-link" href="/">← Retour au site</a>
+  </header>
+
+  <main class="admin-wrap">
+    <section id="loginSection" class="login-box admin-card">
+      <div class="eyebrow">ESPACE PRIVÉ / ADMINISTRATION</div>
+      <h1 style="font-family:'Space Grotesk';font-size:30px">Connexion</h1>
+      <p style="color:var(--muted);font-size:13px">Connecte-toi pour gérer ton portfolio.</p>
+      <form id="loginForm">
+        <label class="admin-label" for="username">Identifiant</label>
+        <input class="admin-input" id="username" autocomplete="username" required>
+        <label class="admin-label" for="password">Mot de passe</label>
+        <input class="admin-input" id="password" type="password" autocomplete="current-password" required>
+        <button class="button" type="submit" style="width:100%">Se connecter ↗</button>
+      </form>
+      <div class="notice" id="loginNotice"></div>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <div class="admin-head">
+        <div><div class="eyebrow">RISIO STUDIO / ESPACE PRIVÉ</div><h1>Administration</h1><p style="color:var(--muted);margin:0">Gère ton portfolio et tes visiteurs.</p></div>
+        <button class="button button-outline" id="logoutButton">Déconnexion</button>
+      </div>
+
+      <div class="admin-tabs">
+        <button class="tab active" data-tab="messages">Messages</button>
+        <button class="tab" data-tab="content">Contenu du site</button>
+      </div>
+
+      <section id="messagesTab">
+        <div class="admin-card">
+          <h2>Conversations visiteurs</h2>
+          <div class="notice" id="messageNotice"></div>
+          <div id="conversationList" class="conversation-list">Chargement…</div>
+        </div>
+        <div class="admin-card hidden" id="conversationDetail">
+          <div class="admin-head">
+            <div><div class="eyebrow">MESSAGERIE</div><h2 id="conversationTitle">Conversation</h2></div>
+            <button class="secondary-button danger" id="deleteConversation">Supprimer</button>
+          </div>
+          <div class="chat-log" id="chatLog"></div>
+          <form id="replyForm">
+            <label class="admin-label" for="replyText">Ta réponse</label>
+            <textarea class="admin-input" id="replyText" rows="3" maxlength="2000" required></textarea>
+            <button class="button" type="submit">Envoyer la réponse ↗</button>
+          </form>
+          <div class="notice" id="replyNotice"></div>
+        </div>
+      </section>
+
+      <section id="contentTab" class="hidden">
+        <div class="admin-card">
+          <h2>Modifier le contenu du portfolio</h2>
+          <p style="color:var(--muted);font-size:13px">Tu peux modifier ton nom, ta description, tes projets, tes services, tes tarifs et tes compétences. Le contenu doit rester au format JSON.</p>
+          <label class="admin-label" for="contentEditor">Contenu JSON</label>
+          <textarea class="admin-textarea" id="contentEditor" spellcheck="false"></textarea>
+          <div class="admin-form-row">
+            <button class="button" id="saveContent" type="button">Enregistrer les modifications</button>
+            <button class="secondary-button" id="reloadContent" type="button">Recharger</button>
+          </div>
+          <div class="notice" id="contentNotice"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    let currentConversation = null;
+
+    async function api(url, options = {}) {
+      const response = await fetch(url, {
+        ...options,
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.status === 401) {
+        showLogin();
+        throw new Error(data.error || "Session expirée.");
+      }
+      if (!response.ok) throw new Error(data.error || "Une erreur est survenue.");
+      return data;
+    }
+
+    function showLogin() {
+      $("dashboard").classList.add("hidden");
+      $("loginSection").classList.remove("hidden");
+    }
+    function showDashboard() {
+      $("loginSection").classList.add("hidden");
+      $("dashboard").classList.remove("hidden");
+      loadConversations();
+    }
+
+    $("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      $("loginNotice").textContent = "Connexion…";
+      try {
+        await api("/api/admin/login", {
+          method: "POST",
+          body: JSON.stringify({ username: $("username").value, password: $("password").value })
+        });
+        $("password").value = "";
+        $("loginNotice").textContent = "";
+        showDashboard();
+      } catch (error) {
+        $("loginNotice").textContent = error.message;
+      }
+    });
+
+    $("logoutButton").addEventListener("click", async () => {
+      try { await api("/api/admin/logout", { method: "POST", body: "{}" }); } catch (e) {}
+      showLogin();
+    });
+
+    async function checkSession() {
+      try {
+        const data = await api("/api/admin/me");
+        if (data.authenticated) showDashboard();
+        else showLogin();
+      } catch (e) { showLogin(); }
+    }
+
+    document.querySelectorAll(".tab").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+        button.classList.add("active");
+        $("messagesTab").classList.toggle("hidden", button.dataset.tab !== "messages");
+        $("contentTab").classList.toggle("hidden", button.dataset.tab !== "content");
+        if (button.dataset.tab === "content") loadEditor();
+      });
+    });
+
+    async function loadConversations() {
+      $("conversationList").textContent = "Chargement…";
+      try {
+        const conversations = await api("/api/admin/conversations");
+        if (!conversations.length) {
+          $("conversationList").textContent = "Aucune conversation pour le moment.";
+          return;
+        }
+        $("conversationList").innerHTML = "";
+        conversations.forEach(c => {
+          const item = document.createElement("div");
+          item.className = "conversation";
+          const info = document.createElement("div");
+          const name = document.createElement("strong");
+          name.textContent = c.visitor_name;
+          const last = document.createElement("small");
+          last.textContent = c.last_message || "Aucun message";
+          info.append(name, last);
+          const button = document.createElement("button");
+          button.textContent = "Ouvrir";
+          button.addEventListener("click", () => openConversation(c.id, c.visitor_name));
+          item.append(info, button);
+          $("conversationList").append(item);
+        });
+      } catch (error) {
+        $("conversationList").textContent = error.message;
+      }
+    }
+
+    async function openConversation(id, name) {
+      currentConversation = id;
+      $("conversationDetail").classList.remove("hidden");
+      $("conversationTitle").textContent = "Discussion avec " + name;
+      $("chatLog").textContent = "Chargement…";
+      try {
+        const data = await api("/api/admin/conversations/" + id);
+        $("chatLog").innerHTML = "";
+        data.messages.forEach(m => {
+          const article = document.createElement("div");
+          article.className = "admin-message " + (m.sender === "visitor" ? "visitor" : "");
+          const label = document.createElement("small");
+          label.textContent = m.sender === "visitor" ? name : "Risio";
+          const text = document.createElement("p");
+          text.textContent = m.body;
+          article.append(label, text);
+          $("chatLog").append(article);
+        });
+        $("chatLog").scrollTop = $("chatLog").scrollHeight;
+      } catch (error) {
+        $("chatLog").textContent = error.message;
+      }
+    }
+
+    $("replyForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!currentConversation) return;
+      try {
+        await api("/api/admin/conversations/" + currentConversation + "/reply", {
+          method: "POST",
+          body: JSON.stringify({ message: $("replyText").value })
+        });
+        $("replyText").value = "";
+        $("replyNotice").textContent = "Réponse envoyée.";
+        const title = $("conversationTitle").textContent.replace("Discussion avec ", "");
+        await openConversation(currentConversation, title);
+        loadConversations();
+      } catch (error) {
+        $("replyNotice").textContent = error.message;
+      }
+    });
+
+    $("deleteConversation").addEventListener("click", async () => {
+      if (!currentConversation || !confirm("Supprimer définitivement cette conversation ?")) return;
+      try {
+        await api("/api/admin/conversations/" + currentConversation, { method: "DELETE" });
+        currentConversation = null;
+        $("conversationDetail").classList.add("hidden");
+        $("messageNotice").textContent = "Conversation supprimée.";
+        loadConversations();
+      } catch (error) {
+        $("messageNotice").textContent = error.message;
+      }
+    });
+
+    async function loadEditor() {
+      $("contentNotice").textContent = "Chargement…";
+      try {
+        const content = await api("/api/content");
+        $("contentEditor").value = JSON.stringify(content, null, 2);
+        $("contentNotice").textContent = "";
+      } catch (error) {
+        $("contentNotice").textContent = error.message;
+      }
+    }
+
+    $("reloadContent").addEventListener("click", loadEditor);
+    $("saveContent").addEventListener("click", async () => {
+      try {
+        const content = JSON.parse($("contentEditor").value);
+        await api("/api/admin/content", {
+          method: "PUT",
+          body: JSON.stringify({ content })
+        });
+        $("contentNotice").textContent = "Modifications enregistrées ! Actualise le site public pour les voir.";
+      } catch (error) {
+        $("contentNotice").textContent = error instanceof SyntaxError ? "JSON invalide : vérifie les virgules et les guillemets." : error.message;
+      }
+    });
+
+    checkSession();
+  </script>
+</body>
+</html>
